@@ -209,7 +209,7 @@ public partial class ExcelHandler
             }
             catch
             {
-                ws.ReplaceChild(sheetDataBackup, sheetData);
+                OfficeCli.Core.ElementRollback.RestoreInPlace(sheetData, sheetDataBackup);
                 // sheetData replaced — cached row entries for the old reference are stale
                 InvalidateRowIndex();
                 throw;

@@ -320,7 +320,7 @@ public partial class ExcelHandler
         {
             if (cellPreExisted)
                 // Rollback: restore cell to pre-modification state.
-                cell.Parent?.ReplaceChild(cellBackup, cell);
+                OfficeCli.Core.ElementRollback.RestoreInPlace(cell, cellBackup);
             else
                 // Newly created by this Set — remove it so a failed create
                 // leaves no ghost cell.

@@ -1037,7 +1037,7 @@ public partial class ExcelHandler
             {
                 // Restore the pre-existing cell to its original state so a
                 // failed Add makes no partial change (mirrors Set-side rollback).
-                cell.Parent?.ReplaceChild(cellBackup, cell);
+                OfficeCli.Core.ElementRollback.RestoreInPlace(cell, cellBackup);
             }
             else
             {

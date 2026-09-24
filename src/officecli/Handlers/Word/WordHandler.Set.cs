@@ -587,8 +587,11 @@ public partial class WordHandler
         }
         catch
         {
-            // Rollback: restore element to pre-modification state
-            element.Parent?.ReplaceChild(elementBackup, element);
+            // Rollback: restore element to pre-modification state, in place so
+            // the nav caches and later commands keep addressing the live element
+            // (issue #424). Descendants are fresh clones — drop the child caches.
+            OfficeCli.Core.ElementRollback.RestoreInPlace(element, elementBackup);
+            ClearNavChildCaches();
             throw;
         }
     }

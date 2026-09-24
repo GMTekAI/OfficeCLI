@@ -1949,7 +1949,7 @@ public partial class PowerPointHandler
         catch
         {
             // Rollback: restore shape to pre-modification state
-            shape.Parent?.ReplaceChild(shapeBackup, shape);
+            OfficeCli.Core.ElementRollback.RestoreInPlace(shape, shapeBackup);
             throw;
         }
     }
