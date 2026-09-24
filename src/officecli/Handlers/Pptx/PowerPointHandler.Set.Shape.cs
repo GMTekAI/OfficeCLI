@@ -1160,6 +1160,8 @@ public partial class PowerPointHandler
                         _ => new Drawing.ShapeTypeValues(value),
                     };
                     prstGeom.Preset = resolvedShape;
+                    // elbow → straight must not keep the elbow's adj1 (#235).
+                    ReconcileAdjustGuides(prstGeom);
                     break;
                 }
                 case "headend" or "headEnd":

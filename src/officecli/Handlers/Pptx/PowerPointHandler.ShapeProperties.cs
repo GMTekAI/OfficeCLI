@@ -975,7 +975,10 @@ public partial class PowerPointHandler
                     spPr.RemoveAllChildren<Drawing.CustomGeometry>();
                     var existingGeom = spPr.GetFirstChild<Drawing.PresetGeometry>();
                     if (existingGeom != null)
+                    {
                         existingGeom.Preset = ParsePresetShape(value);
+                        ReconcileAdjustGuides(existingGeom);
+                    }
                     else
                         {
                             var newGeom = EnsurePresetGeometry(spPr);
@@ -1037,7 +1040,10 @@ public partial class PowerPointHandler
                         spPr.RemoveAllChildren<Drawing.CustomGeometry>();
                         var existingGeom = spPr.GetFirstChild<Drawing.PresetGeometry>();
                         if (existingGeom != null)
+                        {
                             existingGeom.Preset = preset;
+                            ReconcileAdjustGuides(existingGeom);
+                        }
                         else
                             {
                             var newGeom = EnsurePresetGeometry(spPr);
