@@ -259,7 +259,7 @@ public partial class PowerPointHandler
         }
         else
         {
-            var resolved = ResolveInheritedPosition(shape, part);
+            var resolved = SlideComposition.ResolveInheritedPosition(shape, part);
             if (resolved == null)
             {
                 if (string.IsNullOrWhiteSpace(GetShapeText(shape))) return;
