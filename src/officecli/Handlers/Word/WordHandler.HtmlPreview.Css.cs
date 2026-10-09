@@ -781,8 +781,25 @@ public partial class WordHandler
                     }
                     if (gSizePt <= 0) gSizePt = 12.0;
 
+                    // The grid quantises the *number of grid lines* a text line
+                    // occupies; it does not replace the paragraph's line spacing.
+                    // At the "auto" rule w:line is still a multiplier in 240ths of a
+                    // line (§17.3.1.33), it just scales a line count that has already
+                    // been rounded up to whole grid units. Recomputing from the bare
+                    // font height here discarded that multiplier, so 1x/1.5x/3x all
+                    // collapsed onto the same single grid unit.
+                    double lineMult = 1.0;
+                    var gLineVal = pProps.SpacingBetweenLines?.Line?.Value
+                                   ?? styleSpacing?.Line?.Value;
+                    var gRule = pProps.SpacingBetweenLines?.LineRule?.InnerText
+                                ?? styleSpacing?.LineRule?.InnerText;
+                    if ((gRule == "auto" || gRule == null)
+                        && int.TryParse(gLineVal, out var gLvNum) && gLvNum > 0)
+                        lineMult = gLvNum / 240.0;
+
                     double fontHeightPt = gSizePt * gRatio;
-                    double snappedPt = Math.Ceiling(fontHeightPt / gridPitchPt) * gridPitchPt;
+                    double gridUnits = Math.Ceiling(fontHeightPt / gridPitchPt);
+                    double snappedPt = Math.Ceiling(lineMult * gridUnits) * gridPitchPt;
                     parts.RemoveAll(p => p.StartsWith("line-height"));
                     parts.Add($"line-height:{snappedPt:0.##}pt");
                 }
