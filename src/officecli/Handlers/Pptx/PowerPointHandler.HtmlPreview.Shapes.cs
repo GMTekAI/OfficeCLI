@@ -1281,12 +1281,30 @@ public partial class PowerPointHandler
     {
         var dataPathAttr = string.IsNullOrEmpty(dataPath) ? "" : $" data-path=\"{HtmlEncode(dataPath)}\"";
         var xfrm = pic.ShapeProperties?.Transform2D;
-        if (xfrm?.Offset == null || xfrm?.Extents == null) return;
-
-        var x = overridePos?.x ?? xfrm.Offset.X?.Value ?? 0;
-        var y = overridePos?.y ?? xfrm.Offset.Y?.Value ?? 0;
-        var cx = overridePos?.cx ?? xfrm.Extents.Cx?.Value ?? 0;
-        var cy = overridePos?.cy ?? xfrm.Extents.Cy?.Value ?? 0;
+        var hasOwnXfrm = xfrm?.Offset != null && xfrm?.Extents != null;
+        // A picture filled into a picture placeholder (PowerPoint "click icon to
+        // add picture") carries <p:ph> and an empty spPr: its frame is inherited
+        // from the layout/master slot, exactly like a placeholder <p:sp> —
+        // resolved through the shared SlideComposition interpreter (issue #466).
+        var pos = overridePos;
+        if (pos == null)
+        {
+            if (hasOwnXfrm)
+            {
+                pos = (xfrm!.Offset!.X?.Value ?? 0, xfrm.Offset.Y?.Value ?? 0,
+                    xfrm.Extents!.Cx?.Value ?? 0, xfrm.Extents.Cy?.Value ?? 0);
+            }
+            else if (slidePart is SlidePart picSlidePart)
+            {
+                var picPh = pic.NonVisualPictureProperties?.ApplicationNonVisualDrawingProperties
+                    ?.GetFirstChild<PlaceholderShape>();
+                var inheritedFrame = SlideComposition.ResolveInheritedFrame(picPh, picSlidePart);
+                if (inheritedFrame != null)
+                    pos = (inheritedFrame.X, inheritedFrame.Y, inheritedFrame.Cx, inheritedFrame.Cy);
+            }
+        }
+        if (pos == null) return;
+        var (x, y, cx, cy) = pos.Value;
 
         // Picture-level hyperlink → wrap the picture <div> in <a> for clickability in
         // HTML preview. CONSISTENCY(shape-picture-parity): RenderShape already does
@@ -1332,17 +1350,17 @@ public partial class PowerPointHandler
         var picTransforms = new List<string>();
 
         // Rotation
-        if (xfrm.Rotation != null && xfrm.Rotation.Value != 0)
+        if (xfrm?.Rotation != null && xfrm.Rotation.Value != 0)
             picTransforms.Add($"rotate({xfrm.Rotation.Value / 60000.0:0.##}deg)");
 
         // Flip — CONSISTENCY(shape-picture-parity): mirror RenderShape's flip
         // block (rotate before scale). A flipH/flipV picture mirrors in real
         // PowerPoint, so view html must do the same.
-        if (xfrm.HorizontalFlip?.Value == true && xfrm.VerticalFlip?.Value == true)
+        if (xfrm?.HorizontalFlip?.Value == true && xfrm.VerticalFlip?.Value == true)
             picTransforms.Add("scale(-1,-1)");
-        else if (xfrm.HorizontalFlip?.Value == true)
+        else if (xfrm?.HorizontalFlip?.Value == true)
             picTransforms.Add("scaleX(-1)");
-        else if (xfrm.VerticalFlip?.Value == true)
+        else if (xfrm?.VerticalFlip?.Value == true)
             picTransforms.Add("scaleY(-1)");
 
         // 3D rotation (scene3d camera rotation) → CSS perspective transform.
