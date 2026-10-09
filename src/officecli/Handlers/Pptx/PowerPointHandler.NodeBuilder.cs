@@ -1029,21 +1029,7 @@ public partial class PowerPointHandler
         // reader the shape does not own its position.
         if (phElemForNode != null && part is SlidePart shapeSlotPart
             && !SlideComposition.HasCompleteOwnFrame(xfrm))
-        {
-            var frame = SlideComposition.ResolveInheritedFrame(phElemForNode, shapeSlotPart);
-            if (frame != null)
-            {
-                node.Format["effective.x"] = FormatEmu(frame.X);
-                node.Format["effective.y"] = FormatEmu(frame.Y);
-                node.Format["effective.width"] = FormatEmu(frame.Cx);
-                node.Format["effective.height"] = FormatEmu(frame.Cy);
-                var frameSrc = SlideComposition.ProvenancePath(slideNum, frame);
-                node.Format["effective.x.src"] = frameSrc;
-                node.Format["effective.y.src"] = frameSrc;
-                node.Format["effective.width.src"] = frameSrc;
-                node.Format["effective.height.src"] = frameSrc;
-            }
-        }
+            EmitInheritedFrame(node, phElemForNode, shapeSlotPart, slideNum);
 
         // Shape fill
         var shapeFill = shape.ShapeProperties?.GetFirstChild<Drawing.SolidFill>();
@@ -2774,21 +2760,7 @@ public partial class PowerPointHandler
         // picture does not own its position.
         if (picPhElem != null && slidePart != null
             && !SlideComposition.HasCompleteOwnFrame(picXfrm))
-        {
-            var frame = SlideComposition.ResolveInheritedFrame(picPhElem, slidePart);
-            if (frame != null)
-            {
-                node.Format["effective.x"] = FormatEmu(frame.X);
-                node.Format["effective.y"] = FormatEmu(frame.Y);
-                node.Format["effective.width"] = FormatEmu(frame.Cx);
-                node.Format["effective.height"] = FormatEmu(frame.Cy);
-                var frameSrc = SlideComposition.ProvenancePath(slideNum, frame);
-                node.Format["effective.x.src"] = frameSrc;
-                node.Format["effective.y.src"] = frameSrc;
-                node.Format["effective.width.src"] = frameSrc;
-                node.Format["effective.height.src"] = frameSrc;
-            }
-        }
+            EmitInheritedFrame(node, picPhElem, slidePart, slideNum);
 
         // CONSISTENCY(picture-geometry): a picture can be "cropped to shape" via a
         // non-rectangle <a:prstGeom> on its spPr (e.g. prst="ellipse"). AddPicture
@@ -3691,5 +3663,24 @@ public partial class PowerPointHandler
             }
         }
         return null;
+    }
+
+    /// <summary>
+    /// Report the frame a slot-bound shape or picture inherits from its
+    /// layout/master placeholder as <c>effective.x/y/width/height</c> with the
+    /// slot as <c>effective.*.src</c>. Bare x/y stay own-only: their absence
+    /// is what tells the reader the element does not own its position.
+    /// </summary>
+    private static void EmitInheritedFrame(DocumentNode node, PlaceholderShape ph, SlidePart slidePart, int slideNum)
+    {
+        var frame = SlideComposition.ResolveInheritedFrame(ph, slidePart);
+        if (frame == null) return;
+        var src = SlideComposition.ProvenancePath(slideNum, frame);
+        node.Format["effective.x"] = FormatEmu(frame.X);
+        node.Format["effective.y"] = FormatEmu(frame.Y);
+        node.Format["effective.width"] = FormatEmu(frame.Cx);
+        node.Format["effective.height"] = FormatEmu(frame.Cy);
+        foreach (var k in new[] { "x", "y", "width", "height" })
+            node.Format[$"effective.{k}.src"] = src;
     }
 }
